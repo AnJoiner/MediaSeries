@@ -12,8 +12,8 @@
 
 *  使用 ndk-build 编译 Lame 并生成 so 文件
 
-相关博客文章 ：
+## 相关博客文章 
 
 [Android 音视频开发:音视频基础](https://juejin.im/post/5e195e8be51d45028e4667c9)
 
-[Android 音视频开发:音视频基础](https://juejin.im/post/5e1d86706fb9a02fed0de5ec)
+[Android音视频开发:音频非压缩编码和压缩编码](https://juejin.im/post/5e1d86706fb9a02fed0de5ec)
