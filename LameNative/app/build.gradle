@@ -18,9 +18,10 @@ android {
             cmake {
                 cppFlags ""
             }
-        }
-        ndk {
-            abiFilters 'armeabi-v7a', 'arm64-v8a'
+
+            ndk {
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
+            }
         }
     }
     buildTypes {
@@ -35,7 +36,6 @@ android {
             version "3.10.2"
         }
     }
-
     compileOptions {
         targetCompatibility JavaVersion.VERSION_1_8
         sourceCompatibility JavaVersion.VERSION_1_8

@@ -1,2 +1,2 @@
 include ':app'
-rootProject.name='media1'
+rootProject.name='LameNative'

@@ -2,10 +2,10 @@
 // Created by anjoiner on 20-1-16.
 //
 
-#ifndef MEDIA1_MP3_ENCODER_H
-#define MEDIA1_MP3_ENCODER_H
+#ifndef LAMENATIVE_TEST_H
+#define LAMENATIVE_TEST_H
 
-#endif //MEDIA1_MP3_ENCODER_H
+#endif //LAMENATIVE_TEST_H
 
 FILE* pcmFile;
 FILE* mp3File;
