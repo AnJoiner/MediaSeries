@@ -1,5 +1,6 @@
-package com.coder.media
+package com.coder.media.ui.activity
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.media.AudioFormat
@@ -9,9 +10,12 @@ import android.media.AudioTrack
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.coder.media.R
+import com.coder.media.Status
 import kotlinx.android.synthetic.main.activity_play.*
 import java.io.File
 import java.io.FileInputStream
@@ -35,13 +39,16 @@ class PlayActivity : AppCompatActivity() {
     private var status = Status.PREPARING
     private var filename = "record.pcm"
 
-    private var thread:Thread ?= null
+    private var thread: Thread? = null
+//    private var fis: FileInputStream? = null
 
-    private var handler: Handler = object : Handler() {
+    private var handler: Handler = @SuppressLint("HandlerLeak")
+    object : Handler() {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
-            if (msg.what == 0){
-                btnPlay.setText("开始")
+            if (msg.what == 0) {
+                stopPlay()
+                btnPlay.text = "开始"
             }
         }
     }
@@ -66,10 +73,10 @@ class PlayActivity : AppCompatActivity() {
             if (status == Status.PREPARING) {
                 createTrack()
                 startPlay()
-                btnPlay.setText("停止")
+                btnPlay.text = "停止"
             } else if (status == Status.STARTING) {
                 stopPlay()
-                btnPlay.setText("开始")
+                btnPlay.text = "开始"
             }
         })
     }
@@ -89,10 +96,10 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private fun startPlay() {
-        if (null!=audioTrack && audioTrack?.state != AudioTrack.STATE_UNINITIALIZED){
+        if (null != audioTrack && audioTrack?.state != AudioTrack.STATE_UNINITIALIZED) {
             audioTrack?.play()
 
-            thread= Thread(Runnable {
+            thread = Thread(Runnable {
                 readDataFromFile()
             })
             thread?.start()
@@ -101,32 +108,32 @@ class PlayActivity : AppCompatActivity() {
     }
 
     private fun stopPlay() {
+        Log.d("Play", "===>>> 111")
         if (audioTrack != null && audioTrack?.state != AudioTrack.STATE_UNINITIALIZED) {
             audioTrack?.stop()
             status = Status.STOP
-
         }
         release()
     }
 
 
     private fun release() {
-        if (thread!=null){
+        if (thread != null) {
             thread?.join()
-            thread =null
+            thread = null
         }
+        Log.d("Play", "===>>> 222")
         if (audioTrack != null) {
             audioTrack?.release()
             audioTrack = null
         }
+        Log.d("Play", "===>>> 333")
         status = Status.PREPARING
     }
 
 
     private fun readDataFromFile() {
         val byteArray = ByteArray(bufferSizeInBytes)
-
-
         val file = File(externalCacheDir?.absolutePath + File.separator + filename)
         if (!file.exists()) {
             Toast.makeText(this, "请先进行录制PCM音频", Toast.LENGTH_SHORT).show()
@@ -136,14 +143,13 @@ class PlayActivity : AppCompatActivity() {
         var read: Int
         status = Status.STARTING
 
-        while ({ read = fis.read(byteArray);read }() > 0) {
+        while (status == Status.STARTING && { read = fis.read(byteArray);read }() > 0) {
             var ret = audioTrack?.write(byteArray, 0, bufferSizeInBytes)!!
             if (ret == AudioTrack.ERROR_BAD_VALUE || ret == AudioTrack.ERROR_INVALID_OPERATION || ret == AudioManager.ERROR_DEAD_OBJECT) {
                 break
             }
         }
         fis.close()
-        stopPlay()
         handler.sendEmptyMessage(0)
     }
 }

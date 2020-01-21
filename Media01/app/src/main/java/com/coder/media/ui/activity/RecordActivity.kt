@@ -1,4 +1,4 @@
-package com.coder.media
+package com.coder.media.ui.activity
 
 import android.Manifest
 import android.content.Context
@@ -11,6 +11,8 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.coder.media.R
+import com.coder.media.Status
 import kotlinx.android.synthetic.main.activity_record.*
 import java.io.File
 import java.io.FileOutputStream
@@ -52,7 +54,9 @@ class RecordActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_record)
-        ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
+        ActivityCompat.requestPermissions(this, permissions,
+            REQUEST_RECORD_AUDIO_PERMISSION
+        )
 
         btnRecord.setOnClickListener(View.OnClickListener {
             if (status == Status.PREPARING) {

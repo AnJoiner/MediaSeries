@@ -1,9 +1,12 @@
-package com.coder.media
+package com.coder.media.ui.activity
 
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.coder.media.Mp3Encoder
+import com.coder.media.R
+import com.coder.media.codec.AACEncoder
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 
@@ -70,6 +73,6 @@ class MainActivity : AppCompatActivity() {
         }
         var encoder = AACEncoder()
         encoder.init()
-        encoder.startASync(this,pcmPath,target)
+        encoder.startASync(pcmPath,target)
     }
 }

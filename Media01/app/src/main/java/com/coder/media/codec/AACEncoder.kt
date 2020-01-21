@@ -1,11 +1,13 @@
-package com.coder.media
+package com.coder.media.codec
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.os.Handler
+import android.os.Message
 import android.util.Log
-import android.widget.Toast
+import com.coder.media.utils.ToastUtils
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -35,6 +37,16 @@ class AACEncoder {
 
     private var thread:Thread?=null
 
+
+    private var handler: Handler = @SuppressLint("HandlerLeak")
+    object : Handler() {
+        override fun handleMessage(msg: Message) {
+            super.handleMessage(msg)
+            if (msg.what == 0){
+                ToastUtils.show("PCM->AAC编码完成")
+            }
+        }
+    }
 
     fun init(){
         mediaFormat = MediaFormat.createAudioFormat(MINE_TYPE,sampleRate,channel)
@@ -113,7 +125,7 @@ class AACEncoder {
         packet[6] = 0xFC.toByte()
     }
 
-    fun startASync(context: Context,pcmPath :String, aacPath:String){
+    fun startASync(pcmPath :String, aacPath:String){
         val byteArray = ByteArray(1024)
         val pcmFile = File(pcmPath)
         if (!pcmFile.exists()){
@@ -133,8 +145,8 @@ class AACEncoder {
             }
             fos?.close()
             fis.close()
-            Toast.makeText(context, "PCM->AAC编码完成", Toast.LENGTH_SHORT).show()
-
+            handler.sendEmptyMessage(0)
+            Log.d("AAC Encode", "PCM->AAC编码完成")
             stop()
             release()
         })
