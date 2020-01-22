@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/btnSeparation"
+            android:layout_width="wrap_content"
+            android:layout_marginRight="30dp"
+            android:text="音视频分离"
+            android:background="@drawable/shape_button_border"
+            android:layout_height="wrap_content"/>
+
+
+        <Button
+            android:id="@+id/btnMerge"
+            android:layout_width="wrap_content"
+            android:text="音视频合并"
+            android:background="@drawable/shape_button_border"
+            android:layout_height="wrap_content"/>
+
+
+    </LinearLayout>
+    <TextView
+        android:background="@drawable/shape_button_border"
+        android:layout_width="match_parent"
+        android:layout_margin="20dp"
+        android:padding="5dp"
+        android:text="输出目录："
+        android:minLines="5"
+        android:layout_height="wrap_content"/>
+
+</LinearLayout>
