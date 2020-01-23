@@ -27,6 +27,7 @@
 
     </LinearLayout>
     <TextView
+        android:id="@+id/tvOutPath"
         android:background="@drawable/shape_button_border"
         android:layout_width="match_parent"
         android:layout_margin="20dp"

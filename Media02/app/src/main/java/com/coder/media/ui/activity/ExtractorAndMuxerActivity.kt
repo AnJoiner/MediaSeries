@@ -7,10 +7,13 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.coder.media.R
 import com.coder.media.utils.FileUtils
+import com.coder.media.utils.ToastUtils
 import kotlinx.android.synthetic.main.activity_extractor_muxer.*
 import java.io.File
 import java.nio.ByteBuffer
@@ -25,18 +28,33 @@ import kotlin.math.abs
 class ExtractorAndMuxerActivity : AppCompatActivity() {
 
     private var mVideoPath: String? = null
-    private var mVideoResult:String?=null
-    private var mAudioResult:String?=null
+    private var mVideoResult: String? = null
+    private var mAudioResult: String? = null
 
     private var mMediaExtractor: MediaExtractor? = null
-    private var mMediaMuxer: MediaMuxer?=null
+    private var mMediaMuxer: MediaMuxer? = null
 
     private var videoTrackIndex = -1
     private var audioTrackIndex = -1
-    private var videoTrackFormat:MediaFormat?=null
-    private var audioTrackFormat:MediaFormat?=null
+    private var videoTrackFormat: MediaFormat? = null
+    private var audioTrackFormat: MediaFormat? = null
 
-    companion object{
+    private val handler: Handler = object : Handler() {
+        override fun handleMessage(msg: Message) {
+            super.handleMessage(msg)
+            var ss = StringBuilder()
+            if (msg.what == 0) {
+                ToastUtils.show("音频分离完成")
+                ss.append(mAudioResult)
+            } else if (msg.what == 1) {
+                ToastUtils.show("视频分离完成")
+                ss.append(mVideoResult)
+            }
+            tvOutPath.text = ss.toString()
+        }
+    }
+
+    companion object {
         fun start(context: Context) {
             val intent = Intent(context, ExtractorAndMuxerActivity::class.java)
             context.startActivity(intent)
@@ -53,8 +71,8 @@ class ExtractorAndMuxerActivity : AppCompatActivity() {
     private fun initData() {
         FileUtils.copy2Memory(this, "test.mp4")
         mVideoPath = File(externalCacheDir, "test.mp4").absolutePath
-        mVideoResult = File(externalCacheDir,"result.mp4").absolutePath
-        mAudioResult = File(externalCacheDir,"result.aac").absolutePath
+        mVideoResult = File(externalCacheDir, "result.mp4").absolutePath
+        mAudioResult = File(externalCacheDir, "result.aac").absolutePath
     }
 
     private fun initListener() {
@@ -67,33 +85,44 @@ class ExtractorAndMuxerActivity : AppCompatActivity() {
     }
 
     private fun createMediaExtractor() {
+        tvOutPath.text = "输出目录：\n"
+
         mMediaExtractor = MediaExtractor()
         //设置视频地址
         mMediaExtractor?.setDataSource(mVideoPath.toString())
         val trackCount = mMediaExtractor?.trackCount
-
         for (i in 0 until trackCount!!) {
             val trackFormat = mMediaExtractor?.getTrackFormat(i)
             val mime = trackFormat?.getString(MediaFormat.KEY_MIME)
             if (mime?.startsWith("audio/")!!) {
                 audioTrackIndex = i
                 audioTrackFormat = trackFormat
-                Log.d("AUDIO","channel:"+trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)+",bitRate :"+trackFormat.getInteger(MediaFormat.KEY_BIT_RATE)+", sampleRate:"+trackFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)+",mine:"+mime)
+
+                Log.d(
+                    "AUDIO",
+                    "channel:" + trackFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT) + ",bitRate :" + trackFormat.getInteger(
+                        MediaFormat.KEY_BIT_RATE
+                    ) + ", sampleRate:" + trackFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE) + ",mine:" + mime
+                )
             }
             if (mime.startsWith("video/")) {
                 videoTrackIndex = i
                 videoTrackFormat = trackFormat
-                Log.d("VIDEO","frameRate:"+trackFormat.getInteger(MediaFormat.KEY_FRAME_RATE)+",mine:"+mime)
+
+                Log.d(
+                    "VIDEO",
+                    "frameRate:" + trackFormat.getInteger(MediaFormat.KEY_FRAME_RATE) + ",mine:" + mime
+                )
             }
         }
-//        saveVideo()
-        saveAudio()
+//        saveAudio()
+        saveVideo()
     }
 
-    private fun saveVideo(){
+    private fun saveVideo() {
         Thread(Runnable {
             mMediaExtractor?.selectTrack(videoTrackIndex)
-            mMediaMuxer = MediaMuxer(mVideoResult!!,MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            mMediaMuxer = MediaMuxer(mVideoResult!!, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             audioTrackIndex = mMediaMuxer!!.addTrack(videoTrackFormat!!)
             mMediaMuxer!!.start()
             val frameRate = videoTrackFormat?.getInteger(MediaFormat.KEY_FRAME_RATE)
@@ -119,14 +148,15 @@ class ExtractorAndMuxerActivity : AppCompatActivity() {
             mMediaExtractor = null
             mMediaMuxer = null
 
-            Log.d("VIDEO","分离视频完成")
+            handler.sendEmptyMessage(1)
+            Log.d("VIDEO", "分离视频完成")
         }).start()
     }
 
     private fun saveAudio() {
         Thread(Runnable {
-            mMediaExtractor?.selectTrack(audioTrackIndex)
-            val buffer = ByteBuffer.allocate(100*1024)
+            mMediaExtractor!!.selectTrack(audioTrackIndex)
+            val buffer = ByteBuffer.allocate(100 * 1024)
 
             mMediaExtractor!!.readSampleData(buffer, 0)
             val firstSampleTime: Long = mMediaExtractor!!.sampleTime
@@ -137,14 +167,15 @@ class ExtractorAndMuxerActivity : AppCompatActivity() {
             mMediaExtractor!!.unselectTrack(audioTrackIndex)
 
             //
-            mMediaExtractor?.selectTrack(audioTrackIndex)
-            mMediaMuxer = MediaMuxer(mAudioResult!!,MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            mMediaExtractor!!.selectTrack(audioTrackIndex)
+            mMediaMuxer = MediaMuxer(mAudioResult!!, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             audioTrackIndex = mMediaMuxer!!.addTrack(audioTrackFormat!!)
             mMediaMuxer!!.start()
 
 
             val info = MediaCodec.BufferInfo()
             info.presentationTimeUs = 0
+            buffer.clear()
 
             var sampleSize = 0
             while (mMediaExtractor!!.readSampleData(buffer, 0).also { sampleSize = it } > 0) {
@@ -164,10 +195,10 @@ class ExtractorAndMuxerActivity : AppCompatActivity() {
             mMediaExtractor = null
             mMediaMuxer = null
 
-            Log.d("VIDEO","分离音频完成")
+            handler.sendEmptyMessage(0)
+            Log.d("VIDEO", "分离音频完成")
         }).start()
     }
-
 
 
 }
